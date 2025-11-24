@@ -520,6 +520,7 @@ class _ExpandedPlayerState extends ConsumerState<ExpandedPlayer> {
                                                   metadata.artist ?? '',
                                                   style: TextStyle(color: Colors.grey[400], fontSize: 12),
                                                   maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
                                                 ),
                                                 trailing: isPlaying ? const Icon(Icons.equalizer, color: Colors.red) : null,
                                                 onTap: () {

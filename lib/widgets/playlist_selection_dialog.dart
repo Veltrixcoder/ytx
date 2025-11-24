@@ -40,7 +40,7 @@ class _PlaylistSelectionDialogState extends ConsumerState<PlaylistSelectionDialo
                     final name = playlists[index];
                     return CupertinoListTile(
                       leading: const Icon(CupertinoIcons.music_albums, color: CupertinoColors.white),
-                      title: Text(name, style: const TextStyle(color: CupertinoColors.white)),
+                      title: Text(name, style: const TextStyle(color: CupertinoColors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
                       onTap: () {
                         storage.addToPlaylist(name, widget.song);
                         Navigator.pop(context);

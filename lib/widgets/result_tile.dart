@@ -75,7 +75,7 @@ class ResultTile extends ConsumerWidget {
                   children: [
                     Text(
                       result.title,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,

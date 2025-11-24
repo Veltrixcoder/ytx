@@ -15,6 +15,9 @@ class AudioHandler {
   // Playlist for queue management
   final ConcatenatingAudioSource _playlist = ConcatenatingAudioSource(children: []);
 
+  // Loading state
+  final ValueNotifier<bool> isLoadingStream = ValueNotifier(false);
+
   AudioPlayer get player => _player;
   ConcatenatingAudioSource get playlist => _playlist;
 
@@ -24,14 +27,11 @@ class AudioHandler {
 
   Future<void> _init() async {
     // Initialize player with the playlist
-    // We don't set it immediately to avoid errors if empty, 
-    // but we will set it when first item is played or queue is modified.
-    // Actually, setting it now is fine, it just won't play anything.
-    // But usually we set it when we have something to play.
   }
 
   Future<void> playVideo(dynamic video) async {
     try {
+      isLoadingStream.value = true;
       // Add to history
       if (video is YtifyResult) {
         _storage.addToHistory(video);
@@ -44,6 +44,8 @@ class AudioHandler {
       await _player.play();
     } catch (e) {
       debugPrint('Error playing video: $e');
+    } finally {
+      isLoadingStream.value = false;
     }
   }
 
@@ -66,14 +68,6 @@ class AudioHandler {
         return;
       }
 
-      // We need to fetch stream URL. 
-      // NOTE: Fetching stream URL for every item in queue immediately might be slow/expensive.
-      // Better approach: LockCachingAudioSource or similar, but for now we fetch eagerly 
-      // or we can use a custom AudioSource that fetches on demand.
-      // Given the constraints and simplicity, let's fetch eagerly for single items, 
-      // but for "Play All" we might need a smarter way. 
-      // For now, let's just fetch.
-      
       // Check if downloaded
       final downloadPath = _storage.getDownloadPath(videoId);
       Uri audioUri;

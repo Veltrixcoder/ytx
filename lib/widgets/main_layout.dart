@@ -19,6 +19,8 @@ class MainLayout extends ConsumerWidget {
     final selectedIndex = ref.watch(navigationIndexProvider);
     final isPlayerExpanded = ref.watch(isPlayerExpandedProvider);
 
+    final audioHandler = ref.watch(audioHandlerProvider);
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F0F),
       body: Stack(
@@ -49,6 +51,22 @@ class MainLayout extends ConsumerWidget {
                 ),
               ),
             ),
+          ),
+
+          // Loading Overlay
+          ValueListenableBuilder<bool>(
+            valueListenable: audioHandler.isLoadingStream,
+            builder: (context, isLoading, _) {
+              if (!isLoading) return const SizedBox.shrink();
+              return Container(
+                color: Colors.black.withValues(alpha: 0.5),
+                child: const Center(
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),

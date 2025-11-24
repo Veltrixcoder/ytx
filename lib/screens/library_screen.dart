@@ -72,11 +72,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       itemCount: favorites.length,
                       itemBuilder: (context, index) {
                         final item = favorites[index];
+                        final itemWidth = _calculateItemWidth(item);
                         return GestureDetector(
                           onTap: () {
                             ref.read(audioHandlerProvider).playVideo(item);
                           },
                           child: Container(
+                            width: itemWidth,
                             margin: const EdgeInsets.only(right: 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +88,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                   child: Image.network(
                                     item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
                                     height: 110,
-                                    fit: BoxFit.fitHeight,
+                                    width: itemWidth,
+                                    fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) =>
                                         Container(color: Colors.grey[800], width: 110, height: 110),
                                   ),
@@ -154,7 +157,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           final item = activeDownloads[videoId]!;
                           final progress = downloadState.progressMap[videoId] ?? 0.0;
                           
+                          final itemWidth = _calculateItemWidth(item);
+                          
                           return Container(
+                            width: itemWidth,
                             margin: const EdgeInsets.only(right: 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -171,7 +177,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                         child: Image.network(
                                           item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
                                           height: 110,
-                                          fit: BoxFit.fitHeight,
+                                          width: itemWidth,
+                                          fit: BoxFit.cover,
                                           errorBuilder: (context, error, stackTrace) =>
                                               Container(color: Colors.grey[800], width: 110, height: 110),
                                         ),
@@ -203,11 +210,13 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         // Show completed downloads
                         final itemData = completedDownloads[index - activeDownloads.length];
                         final item = YtifyResult.fromJson(Map<String, dynamic>.from(itemData['result']));
+                        final itemWidth = _calculateItemWidth(item);
                         return GestureDetector(
                           onTap: () {
                             ref.read(audioHandlerProvider).playVideo(item);
                           },
                           child: Container(
+                            width: itemWidth,
                             margin: const EdgeInsets.only(right: 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +226,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                   child: Image.network(
                                     item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
                                     height: 110,
-                                    fit: BoxFit.fitHeight,
+                                    width: itemWidth,
+                                    fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) =>
                                         Container(color: Colors.grey[800], width: 110, height: 110),
                                   ),
@@ -276,7 +286,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       itemCount: history.length,
                       itemBuilder: (context, index) {
                         final item = history[index];
+                        final itemWidth = _calculateItemWidth(item);
                         return Container(
+                          width: itemWidth,
                           margin: const EdgeInsets.only(right: 12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,7 +298,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                 child: Image.network(
                                   item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
                                   height: 110,
-                                  fit: BoxFit.fitHeight,
+                                  width: itemWidth,
+                                  fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) =>
                                       Container(color: Colors.grey[800], width: 110, height: 110),
                                 ),
@@ -354,7 +367,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                           ),
                           child: const Icon(Icons.playlist_play, color: Colors.white),
                         ),
-                        title: Text(name, style: const TextStyle(color: Colors.white)),
+                        title: Text(name, style: const TextStyle(color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
                         subtitle: Text('${songs.length} songs', style: TextStyle(color: Colors.grey[400])),
                         onTap: () {
                           Navigator.push(
@@ -374,6 +387,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         ),
       ),
     );
+  }
+
+  double _calculateItemWidth(YtifyResult item) {
+    if (item.thumbnails.isNotEmpty) {
+      final thumb = item.thumbnails.last;
+      if (thumb.width > 0 && thumb.height > 0) {
+        // Calculate width based on height of 110
+        return (110 * thumb.width / thumb.height);
+      }
+    }
+    // Fallback based on type
+    final isVideo = item.resultType == 'video';
+    return isVideo ? 196.0 : 110.0;
   }
 
   void _showCreatePlaylistDialog(BuildContext context, StorageService storage) {
