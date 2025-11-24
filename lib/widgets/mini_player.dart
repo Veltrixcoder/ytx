@@ -40,7 +40,7 @@ class MiniPlayer extends ConsumerWidget {
           },
           child: Container(
             height: 60, // Decreased height from 70
-            margin: const EdgeInsets.all(8),
+            margin: const EdgeInsets.symmetric(horizontal: 48, vertical: 8),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: BackdropFilter(
@@ -61,9 +61,8 @@ class MiniPlayer extends ConsumerWidget {
                         borderRadius: BorderRadius.circular(8),
                         child: CachedNetworkImage(
                           imageUrl: mediaItem.artUri.toString(),
-                          width: isSong ? 46 : 82, // 16:9 aspect ratio for videos (46 * 1.77)
                           height: 46,
-                          fit: BoxFit.cover,
+                          fit: BoxFit.fitHeight,
                           errorWidget: (context, url, error) => Container(
                             color: Colors.grey[800],
                             child: const Icon(Icons.music_note, color: Colors.white),

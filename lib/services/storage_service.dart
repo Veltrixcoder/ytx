@@ -16,6 +16,7 @@ class StorageService {
     await Hive.openBox(_historyBoxName);
     await Hive.openBox(_playlistsBoxName);
     await _initFavorites();
+    await _initDownloads();
   }
 
   Box get _historyBox => Hive.box(_historyBoxName);
@@ -141,5 +142,56 @@ class StorageService {
     
     final jsonList = favorites.map((item) => item.toJson()).toList();
     await _favoritesBox.put('list', jsonList);
+  }
+
+  // Downloads
+  static const String _downloadsBoxName = 'downloads';
+  Box get _downloadsBox => Hive.box(_downloadsBoxName);
+  ValueListenable<Box> get downloadsListenable => _downloadsBox.listenable();
+
+  Future<void> _initDownloads() async {
+    await Hive.openBox(_downloadsBoxName);
+  }
+
+  List<Map<String, dynamic>> getDownloads() {
+    final dynamic data = _downloadsBox.get('list');
+    if (data == null) return [];
+    
+    try {
+      final List<dynamic> jsonList = data;
+      return jsonList.map((json) => Map<String, dynamic>.from(json)).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  bool isDownloaded(String videoId) {
+    final downloads = getDownloads();
+    return downloads.any((d) => d['videoId'] == videoId);
+  }
+
+  String? getDownloadPath(String videoId) {
+    final downloads = getDownloads();
+    final item = downloads.firstWhere((d) => d['videoId'] == videoId, orElse: () => {});
+    return item.isNotEmpty ? item['path'] : null;
+  }
+
+  Future<void> addDownload(YtifyResult result, String path) async {
+    final downloads = getDownloads();
+    if (!downloads.any((d) => d['videoId'] == result.videoId)) {
+      downloads.insert(0, {
+        'videoId': result.videoId,
+        'result': result.toJson(),
+        'path': path,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      await _downloadsBox.put('list', downloads);
+    }
+  }
+
+  Future<void> removeDownload(String videoId) async {
+    final downloads = getDownloads();
+    downloads.removeWhere((d) => d['videoId'] == videoId);
+    await _downloadsBox.put('list', downloads);
   }
 }

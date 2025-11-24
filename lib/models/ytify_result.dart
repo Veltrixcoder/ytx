@@ -28,13 +28,24 @@ class YtifyResult {
   });
 
   factory YtifyResult.fromJson(Map<String, dynamic> json) {
+    String type = json['resultType'] ?? '';
+    
+    // Fallback logic for resultType
+    if (type.isEmpty || type == 'unknown') {
+      if (json['videoType'] != null) {
+        type = 'video';
+      } else if (json['duration'] != null) {
+        type = 'video'; // Most likely a video if it has a duration and no other type
+      }
+    }
+
     return YtifyResult(
       title: json['title'] ?? '',
       thumbnails: (json['thumbnails'] as List?)
               ?.map((t) => YtifyThumbnail.fromJson(Map<String, dynamic>.from(t)))
               .toList() ??
           [],
-      resultType: json['resultType'] ?? '',
+      resultType: type,
       isExplicit: json['isExplicit'] ?? false,
       videoId: json['videoId'],
       browseId: json['browseId'],

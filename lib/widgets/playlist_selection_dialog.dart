@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ytx/models/ytify_result.dart';
 import 'package:ytx/services/storage_service.dart';
 import 'package:ytx/widgets/glass_snackbar.dart';
+import 'package:ytx/widgets/app_alert_dialog.dart';
 
 class PlaylistSelectionDialog extends ConsumerStatefulWidget {
   final YtifyResult song;
@@ -19,36 +21,42 @@ class _PlaylistSelectionDialogState extends ConsumerState<PlaylistSelectionDialo
     final storage = ref.watch(storageServiceProvider);
     final playlists = storage.getPlaylistNames();
 
-    return AlertDialog(
-      backgroundColor: const Color(0xFF1E1E1E),
-      title: const Text('Add to Playlist', style: TextStyle(color: Colors.white)),
+    return AppAlertDialog(
+      title: 'Add to Playlist',
       content: SizedBox(
         width: double.maxFinite,
         child: playlists.isEmpty
-            ? const Text('No playlists created yet.', style: TextStyle(color: Colors.grey))
-            : ListView.builder(
-                shrinkWrap: true,
-                itemCount: playlists.length,
-                itemBuilder: (context, index) {
-                  final name = playlists[index];
-                  return ListTile(
-                    leading: const Icon(Icons.playlist_play, color: Colors.white),
-                    title: Text(name, style: const TextStyle(color: Colors.white)),
-                    onTap: () {
-                      storage.addToPlaylist(name, widget.song);
-                      Navigator.pop(context);
-                      showGlassSnackBar(context, 'Added to $name');
-                    },
-                  );
-                },
+            ? const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16.0),
+                child: Text('No playlists created yet.', style: TextStyle(color: CupertinoColors.systemGrey)),
+              )
+            : Material(
+                color: Colors.transparent,
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  padding: EdgeInsets.zero,
+                  itemCount: playlists.length,
+                  itemBuilder: (context, index) {
+                    final name = playlists[index];
+                    return CupertinoListTile(
+                      leading: const Icon(CupertinoIcons.music_albums, color: CupertinoColors.white),
+                      title: Text(name, style: const TextStyle(color: CupertinoColors.white)),
+                      onTap: () {
+                        storage.addToPlaylist(name, widget.song);
+                        Navigator.pop(context);
+                        showGlassSnackBar(context, 'Added to $name');
+                      },
+                    );
+                  },
+                ),
               ),
       ),
       actions: [
-        TextButton(
+        CupertinoDialogAction(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        TextButton(
+        CupertinoDialogAction(
           onPressed: () {
             Navigator.pop(context);
             _showCreatePlaylistDialog(context, storage);
@@ -61,38 +69,41 @@ class _PlaylistSelectionDialogState extends ConsumerState<PlaylistSelectionDialo
 
   void _showCreatePlaylistDialog(BuildContext context, StorageService storage) {
     final controller = TextEditingController();
-    showDialog(
+    showAppAlertDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        title: const Text('Create Playlist', style: TextStyle(color: Colors.white)),
-        content: TextField(
+      title: 'Create Playlist',
+      content: Padding(
+        padding: const EdgeInsets.only(top: 16.0),
+        child: CupertinoTextField(
           controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'Playlist Name',
-            hintStyle: TextStyle(color: Colors.grey),
+          placeholder: 'Playlist Name',
+          placeholderStyle: const TextStyle(color: CupertinoColors.systemGrey),
+          style: const TextStyle(color: CupertinoColors.white),
+          decoration: BoxDecoration(
+            color: CupertinoColors.systemGrey6.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(8),
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (controller.text.isNotEmpty) {
-                storage.createPlaylist(controller.text);
-                // Automatically add the song to the new playlist
-                storage.addToPlaylist(controller.text, widget.song);
-                Navigator.pop(context);
-                showGlassSnackBar(context, 'Added to ${controller.text}');
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
       ),
+      actions: [
+        CupertinoDialogAction(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        CupertinoDialogAction(
+          isDefaultAction: true,
+          onPressed: () {
+            if (controller.text.isNotEmpty) {
+              storage.createPlaylist(controller.text);
+              // Automatically add the song to the new playlist
+              storage.addToPlaylist(controller.text, widget.song);
+              Navigator.pop(context);
+              showGlassSnackBar(context, 'Added to ${controller.text}');
+            }
+          },
+          child: const Text('Create'),
+        ),
+      ],
     );
   }
 }

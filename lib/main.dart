@@ -8,6 +8,7 @@ import 'package:ytx/screens/home_screen.dart';
 import 'package:ytx/services/storage_service.dart';
 import 'package:ytx/services/navigator_key.dart';
 import 'package:ytx/widgets/main_layout.dart';
+import 'package:ytx/providers/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,35 +35,18 @@ Future<void> main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = ref.watch(themeProvider);
+    
     return MaterialApp(
       navigatorKey: navigatorKey,
       title: 'YTX',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0F0F0F),
-        colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFFF0000), // YouTube Red
-          secondary: Color(0xFFFFFFFF),
-          surface: Color(0xFF1E1E1E),
-        ),
-        textTheme: GoogleFonts.robotoTextTheme(ThemeData.dark().textTheme),
-        useMaterial3: true,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF0F0F0F),
-          elevation: 0,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+      theme: theme,
       builder: (context, child) {
         return MainLayout(child: child ?? const SizedBox.shrink());
       },

@@ -7,6 +7,10 @@ import 'package:just_audio_background/just_audio_background.dart';
 import 'package:ytx/providers/player_provider.dart';
 import 'package:ytx/services/storage_service.dart';
 import 'package:ytx/models/ytify_result.dart';
+import 'package:ytx/services/download_service.dart';
+import 'package:ytx/providers/download_provider.dart';
+import 'package:ytx/widgets/app_alert_dialog.dart';
+import 'package:flutter/cupertino.dart';
 
 class ExpandedPlayer extends ConsumerStatefulWidget {
   const ExpandedPlayer({super.key});
@@ -128,59 +132,127 @@ class _ExpandedPlayerState extends ConsumerState<ExpandedPlayer> {
                                             mainAxisAlignment: MainAxisAlignment.center,
                                             children: [
                                               // Artwork
-                                              SizedBox(
-                                                height: isSong ? 220 : 180,
-                                                child: AspectRatio(
-                                                  aspectRatio: isSong ? 1.0 : 16 / 9,
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      borderRadius: BorderRadius.circular(20),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Colors.black.withValues(alpha: 0.4),
-                                                          blurRadius: 20,
-                                                          offset: const Offset(0, 10),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: Stack(
-                                                      fit: StackFit.expand,
-                                                      children: [
-                                                        ClipRRect(
-                                                          borderRadius: BorderRadius.circular(20),
-                                                          child: CachedNetworkImage(
-                                                            imageUrl: artworkUrl,
-                                                            fit: BoxFit.cover,
-                                                            width: double.infinity,
-                                                            height: double.infinity,
-                                                            errorWidget: (context, url, error) => Container(
-                                                              color: Colors.grey[900],
-                                                              child: const Icon(Icons.music_note,
-                                                                  color: Colors.white, size: 64),
-                                                            ),
+                                              ConstrainedBox(
+                                                constraints: const BoxConstraints(
+                                                  maxHeight: 220,
+                                                ),
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(20),
+                                                    boxShadow: [
+                                                      BoxShadow(
+                                                        color: Colors.black.withValues(alpha: 0.4),
+                                                        blurRadius: 20,
+                                                        offset: const Offset(0, 10),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  child: Stack(
+                                                    children: [
+                                                      ClipRRect(
+                                                        borderRadius: BorderRadius.circular(20),
+                                                        child: CachedNetworkImage(
+                                                          imageUrl: artworkUrl,
+                                                          fit: BoxFit.contain,
+                                                          errorWidget: (context, url, error) => Container(
+                                                            width: 220,
+                                                            height: 220,
+                                                            color: Colors.grey[900],
+                                                            child: const Icon(Icons.music_note,
+                                                                color: Colors.white, size: 64),
                                                           ),
                                                         ),
-                                                        Positioned(
-                                                          bottom: 8,
-                                                          right: 8,
-                                                          child: Container(
-                                                            decoration: BoxDecoration(
-                                                              color: Colors.black.withValues(alpha: 0.5),
-                                                              borderRadius: BorderRadius.circular(12),
-                                                            ),
-                                                            child: Consumer(
-                                                              builder: (context, ref, child) {
-                                                                final storage = ref.watch(storageServiceProvider);
-                                                                return ValueListenableBuilder(
-                                                                  valueListenable: storage.favoritesListenable,
-                                                                  builder: (context, box, _) {
-                                                                    final isFav = storage.isFavorite(mediaItem.id);
-                                                                    return IconButton(
-                                                                      icon: Icon(
-                                                                        isFav ? Icons.favorite : Icons.favorite_border,
-                                                                        color: isFav ? Colors.red : Colors.white,
-                                                                      ),
-                                                                      onPressed: () {
+                                                      ),
+                                                      Positioned(
+                                                        top: 8,
+                                                        right: 8,
+                                                        child: Container(
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.black.withValues(alpha: 0.5),
+                                                            borderRadius: BorderRadius.circular(12),
+                                                          ),
+                                                          child: Consumer(
+                                                            builder: (context, ref, child) {
+                                                              final storage = ref.watch(storageServiceProvider);
+                                                              return ValueListenableBuilder(
+                                                                valueListenable: storage.favoritesListenable,
+                                                                builder: (context, box, _) {
+                                                                  final isFav = storage.isFavorite(mediaItem.id);
+                                                                  return IconButton(
+                                                                    icon: Icon(
+                                                                      isFav ? Icons.favorite : Icons.favorite_border,
+                                                                      color: isFav ? Colors.red : Colors.white,
+                                                                    ),
+                                                                    onPressed: () {
+                                                                      final result = YtifyResult(
+                                                                        videoId: mediaItem.id,
+                                                                        title: mediaItem.title,
+                                                                        thumbnails: [YtifyThumbnail(url: mediaItem.artUri.toString(), width: 0, height: 0)],
+                                                                        artists: [YtifyArtist(name: mediaItem.artist ?? '', id: '')], 
+                                                                        resultType: isSong ? 'song' : 'video',
+                                                                        isExplicit: false,
+                                                                      );
+                                                                      storage.toggleFavorite(result);
+                                                                    },
+                                                                  );
+                                                                },
+                                                              );
+                                                            },
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      Positioned(
+                                                        top: 8,
+                                                        left: 8,
+                                                        child: Container(
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.black.withValues(alpha: 0.5),
+                                                            borderRadius: BorderRadius.circular(12),
+                                                          ),
+                                                          child: Consumer(
+                                                            builder: (context, ref, child) {
+                                                              final storage = ref.watch(storageServiceProvider);
+                                                              return ValueListenableBuilder(
+                                                                valueListenable: storage.downloadsListenable,
+                                                                builder: (context, box, _) {
+                                                                  final isDownloaded = storage.isDownloaded(mediaItem.id);
+                                                                  return IconButton(
+                                                                    icon: Icon(
+                                                                      isDownloaded ? Icons.download_done : Icons.download_rounded,
+                                                                      color: Colors.white,
+                                                                    ),
+                                                                    onPressed: () async {
+                                                                      final downloadService = DownloadService();
+                                                                      
+                                                                      if (isDownloaded) {
+                                                                        await downloadService.deleteDownload(mediaItem.id);
+                                                                        if (context.mounted) {
+                                                                          ScaffoldMessenger.of(context).showSnackBar(
+                                                                            const SnackBar(content: Text('Removed from downloads')),
+                                                                          );
+                                                                        }
+                                                                      } else {
+
+                                                                        // Show downloading alert
+                                                                        showAppAlertDialog(
+                                                                          context: context,
+                                                                          title: 'Downloading',
+                                                                          content: const Column(
+                                                                            mainAxisSize: MainAxisSize.min,
+                                                                            children: [
+                                                                              Text('Please wait while the song is being downloaded...'),
+                                                                              SizedBox(height: 16),
+                                                                              CupertinoActivityIndicator(),
+                                                                            ],
+                                                                          ),
+                                                                          actions: [
+                                                                            CupertinoDialogAction(
+                                                                              onPressed: () => Navigator.pop(context),
+                                                                              child: const Text('Hide'),
+                                                                            ),
+                                                                          ],
+                                                                        );
+
                                                                         final result = YtifyResult(
                                                                           videoId: mediaItem.id,
                                                                           title: mediaItem.title,
@@ -189,17 +261,47 @@ class _ExpandedPlayerState extends ConsumerState<ExpandedPlayer> {
                                                                           resultType: isSong ? 'song' : 'video',
                                                                           isExplicit: false,
                                                                         );
-                                                                        storage.toggleFavorite(result);
-                                                                      },
-                                                                    );
-                                                                  },
-                                                                );
-                                                              },
-                                                            ),
+                                                                        final success = await ref.read(downloadProvider.notifier).startDownload(result);
+                                                                        
+                                                                        if (context.mounted) {
+                                                                          Navigator.of(context, rootNavigator: true).pop(); // Try to pop the dialog
+                                                                          
+                                                                          if (success) {
+                                                                             showAppAlertDialog(
+                                                                              context: context,
+                                                                              title: 'Download Complete',
+                                                                              content: const Text('The song has been successfully downloaded.'),
+                                                                              actions: [
+                                                                                CupertinoDialogAction(
+                                                                                  onPressed: () => Navigator.pop(context),
+                                                                                  child: const Text('OK'),
+                                                                                ),
+                                                                              ],
+                                                                            );
+                                                                          } else {
+                                                                             showAppAlertDialog(
+                                                                              context: context,
+                                                                              title: 'Download Failed',
+                                                                              content: const Text('There was an error downloading the song. Please try again.'),
+                                                                              actions: [
+                                                                                CupertinoDialogAction(
+                                                                                  onPressed: () => Navigator.pop(context),
+                                                                                  child: const Text('OK'),
+                                                                                ),
+                                                                              ],
+                                                                            );
+                                                                          }
+                                                                        }
+                                                                      }
+                                                                    },
+                                                                  );
+                                                                },
+                                                              );
+                                                            },
                                                           ),
                                                         ),
-                                                      ],
-                                                    ),
+                                                      ),
+                                                    ],
                                                   ),
                                                 ),
                                               ),
@@ -243,10 +345,10 @@ class _ExpandedPlayerState extends ConsumerState<ExpandedPlayer> {
                                                         data: SliderTheme.of(context).copyWith(
                                                           thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
                                                           trackHeight: 4,
-                                                          activeTrackColor: Colors.white,
+                                                          activeTrackColor: Theme.of(context).colorScheme.primary,
                                                           inactiveTrackColor: Colors.white.withValues(alpha: 0.3),
-                                                          thumbColor: Colors.white,
-                                                          overlayColor: Colors.white.withValues(alpha: 0.2),
+                                                          thumbColor: Theme.of(context).colorScheme.primary,
+                                                          overlayColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                                                         ),
                                                         child: Slider(
                                                           value: position.inSeconds.toDouble().clamp(0, duration.inSeconds.toDouble()),
@@ -283,6 +385,7 @@ class _ExpandedPlayerState extends ConsumerState<ExpandedPlayer> {
                                               Row(
                                                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                                                 children: [
+
 
                                                   IconButton(
                                                     icon: const Icon(Icons.shuffle, color: Colors.white),

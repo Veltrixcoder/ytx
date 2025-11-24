@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'dart:io';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:ytx/services/youtube_api_service.dart';
@@ -73,11 +74,20 @@ class AudioHandler {
       // but for "Play All" we might need a smarter way. 
       // For now, let's just fetch.
       
-      final streamUrl = await _apiService.getStreamUrl(videoId);
-      if (streamUrl == null) return;
+      // Check if downloaded
+      final downloadPath = _storage.getDownloadPath(videoId);
+      Uri audioUri;
+      
+      if (downloadPath != null && await File(downloadPath).exists()) {
+        audioUri = Uri.file(downloadPath);
+      } else {
+        final streamUrl = await _apiService.getStreamUrl(videoId);
+        if (streamUrl == null) return;
+        audioUri = Uri.parse(streamUrl);
+      }
 
       final audioSource = AudioSource.uri(
-        Uri.parse(streamUrl),
+        audioUri,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/65.0.3325.181 Mobile Safari/537.36',
         },

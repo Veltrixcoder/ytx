@@ -1,9 +1,11 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ytx/providers/navigation_provider.dart';
 import 'package:ytx/providers/player_provider.dart';
 import 'package:ytx/screens/settings_screen.dart';
+import 'package:ytx/screens/about_screen.dart';
 import 'package:ytx/services/navigator_key.dart';
 import 'package:ytx/widgets/mini_player.dart';
 
@@ -61,22 +63,23 @@ class MainLayout extends ConsumerWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
           child: Container(
-            height: 50,
+            height: 60, // Slightly taller for better touch targets
             decoration: BoxDecoration(
-              color: const Color(0xFF272727).withValues(alpha: 0.3),
+              color: const Color(0xFF272727).withValues(alpha: 0.5), // More transparency
               borderRadius: BorderRadius.circular(32),
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withValues(alpha: 0.1),
                 width: 0.5,
               ),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildNavItem(context, ref, Icons.home_rounded, 0, selectedIndex),
-                _buildNavItem(context, ref, Icons.search_rounded, 1, selectedIndex),
-                _buildNavItem(context, ref, Icons.library_music_rounded, 2, selectedIndex),
-                _buildNavItem(context, ref, Icons.settings_rounded, 3, selectedIndex),
+                _buildNavItem(context, ref, CupertinoIcons.home, 0, selectedIndex),
+                _buildNavItem(context, ref, CupertinoIcons.search, 1, selectedIndex),
+                _buildNavItem(context, ref, CupertinoIcons.music_albums, 2, selectedIndex),
+                _buildNavItem(context, ref, CupertinoIcons.settings, 3, selectedIndex),
+                _buildNavItem(context, ref, CupertinoIcons.info, 4, selectedIndex),
               ],
             ),
           ),
@@ -87,21 +90,27 @@ class MainLayout extends ConsumerWidget {
 
   Widget _buildNavItem(BuildContext context, WidgetRef ref, IconData icon, int index, int selectedIndex) {
     final isSelected = selectedIndex == index;
-    return IconButton(
-      icon: Icon(
-        icon,
-        color: isSelected ? Colors.white : Colors.grey,
-        size: 24,
-      ),
-      onPressed: () {
+    return GestureDetector(
+      onTap: () {
         ref.read(navigationIndexProvider.notifier).state = index;
         
         if (index == 3) {
            navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => const SettingsScreen()));
+        } else if (index == 4) {
+           navigatorKey.currentState?.push(MaterialPageRoute(builder: (_) => const AboutScreen()));
         } else {
            navigatorKey.currentState?.popUntil((route) => route.isFirst);
         }
       },
+      child: Container(
+        color: Colors.transparent, // Hit test behavior
+        padding: const EdgeInsets.all(12),
+        child: Icon(
+          icon,
+          color: isSelected ? Colors.white : Colors.grey.withValues(alpha: 0.6),
+          size: 26,
+        ),
+      ),
     );
   }
 }

@@ -4,6 +4,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:ytx/services/storage_service.dart';
 import 'package:ytx/screens/playlist_details_screen.dart';
 import 'package:ytx/providers/player_provider.dart';
+import 'package:ytx/models/ytify_result.dart';
+import 'package:ytx/providers/download_provider.dart';
 
 class LibraryScreen extends ConsumerStatefulWidget {
   const LibraryScreen({super.key});
@@ -75,7 +77,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                             ref.read(audioHandlerProvider).playVideo(item);
                           },
                           child: Container(
-                            width: 110,
                             margin: const EdgeInsets.only(right: 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,9 +85,139 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                   borderRadius: BorderRadius.circular(12),
                                   child: Image.network(
                                     item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
-                                    width: 110,
                                     height: 110,
-                                    fit: BoxFit.cover,
+                                    fit: BoxFit.fitHeight,
+                                    errorBuilder: (context, error, stackTrace) =>
+                                        Container(color: Colors.grey[800], width: 110, height: 110),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  item.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
+              
+              const SizedBox(height: 32),
+
+              // Downloads Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Downloads',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // Navigate to full downloads
+                    },
+                    child: const Text('See all'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ValueListenableBuilder<Box>(
+                valueListenable: storage.downloadsListenable,
+                builder: (context, box, _) {
+                  final completedDownloads = storage.getDownloads();
+                  final downloadState = ref.watch(downloadProvider);
+                  final activeDownloads = downloadState.activeDownloads;
+                  
+                  if (completedDownloads.isEmpty && activeDownloads.isEmpty) {
+                    return const Text('No downloads yet', style: TextStyle(color: Colors.grey));
+                  }
+
+                  return SizedBox(
+                    height: 150,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: activeDownloads.length + completedDownloads.length,
+                      itemBuilder: (context, index) {
+                        // Show active downloads first
+                        if (index < activeDownloads.length) {
+                          final videoId = activeDownloads.keys.elementAt(index);
+                          final item = activeDownloads[videoId]!;
+                          final progress = downloadState.progressMap[videoId] ?? 0.0;
+                          
+                          return Container(
+                            margin: const EdgeInsets.only(right: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: ColorFiltered(
+                                        colorFilter: ColorFilter.mode(
+                                          Colors.black.withValues(alpha: 0.5), 
+                                          BlendMode.darken
+                                        ),
+                                        child: Image.network(
+                                          item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
+                                          height: 110,
+                                          fit: BoxFit.fitHeight,
+                                          errorBuilder: (context, error, stackTrace) =>
+                                              Container(color: Colors.grey[800], width: 110, height: 110),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned.fill(
+                                      child: Center(
+                                        child: CircularProgressIndicator(
+                                          value: progress,
+                                          color: Colors.white,
+                                          strokeWidth: 4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  item.title,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+                        
+                        // Show completed downloads
+                        final itemData = completedDownloads[index - activeDownloads.length];
+                        final item = YtifyResult.fromJson(Map<String, dynamic>.from(itemData['result']));
+                        return GestureDetector(
+                          onTap: () {
+                            ref.read(audioHandlerProvider).playVideo(item);
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(right: 12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.network(
+                                    item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
+                                    height: 110,
+                                    fit: BoxFit.fitHeight,
                                     errorBuilder: (context, error, stackTrace) =>
                                         Container(color: Colors.grey[800], width: 110, height: 110),
                                   ),
@@ -146,7 +277,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       itemBuilder: (context, index) {
                         final item = history[index];
                         return Container(
-                          width: 110,
                           margin: const EdgeInsets.only(right: 12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,9 +285,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 child: Image.network(
                                   item.thumbnails.isNotEmpty ? item.thumbnails.last.url : '',
-                                  width: 110,
                                   height: 110,
-                                  fit: BoxFit.cover,
+                                  fit: BoxFit.fitHeight,
                                   errorBuilder: (context, error, stackTrace) =>
                                       Container(color: Colors.grey[800], width: 110, height: 110),
                                 ),

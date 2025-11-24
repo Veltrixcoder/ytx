@@ -2,20 +2,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:ytx/models/ytify_result.dart';
 import 'package:ytx/services/youtube_api_service.dart';
 
-final exploreContentProvider = FutureProvider<List<YtifyResult>>((ref) async {
+final newestSongsProvider = FutureProvider<List<YtifyResult>>((ref) async {
   final apiService = YouTubeApiService();
-  
-  // Fetch songs and videos for "newest"
-  // We can run these in parallel
-  final songsFuture = apiService.search('newest', filter: 'songs');
-  final videosFuture = apiService.search('newest', filter: 'videos');
-  
-  final results = await Future.wait([songsFuture, videosFuture]);
-  
-  final songs = results[0];
-  final videos = results[1];
-  
-  // Interleave or just combine
-  // Let's just combine for now
-  return [...songs, ...videos]..shuffle(); // Shuffle to give a "mixed" feel
+  return apiService.search('newest', filter: 'songs');
+});
+
+final newestVideosProvider = FutureProvider<List<YtifyResult>>((ref) async {
+  final apiService = YouTubeApiService();
+  return apiService.search('newest', filter: 'videos');
+});
+
+final trendingPlaylistsProvider = FutureProvider<List<YtifyResult>>((ref) async {
+  final apiService = YouTubeApiService();
+  return apiService.search('trending', filter: 'playlists');
+});
+
+// Keep this for backward compatibility if needed, or remove if unused.
+// For now, I'll redefine it to combine everything or just deprecate it.
+// Since HomeScreen will be rewritten, we might not need this anymore.
+// But to avoid breaking other things immediately, let's leave a dummy or combined one.
+final exploreContentProvider = FutureProvider<List<YtifyResult>>((ref) async {
+  final songs = await ref.watch(newestSongsProvider.future);
+  final videos = await ref.watch(newestVideosProvider.future);
+  return [...songs, ...videos]..shuffle();
 });
